@@ -1,7 +1,7 @@
 # go-transport-base
 
-This package contains a transport implementation that handles inbound and outbound connection
-management and pooling and proper shutdown.  It is meant to be a generic re-usable library.
+This package contains a transport implementation to handle common inbound/outbound
+connection pooling and management.  It is meant to be a generic re-usable library.
 
 ### Usage:
 ```
