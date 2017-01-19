@@ -7,8 +7,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	mux "github.com/ipkg/go-mux"
 )
 
 type OutConn struct {
@@ -16,9 +14,18 @@ type OutConn struct {
 	used time.Time
 }
 
+// ListenerDialer implements a listener and dialer.  This is used so that muxers
+// can be used.
+type ListenerDialer interface {
+	Accept() (net.Conn, error)
+	Addr() net.Addr
+	Close() error
+	Dial(addr string, timeout time.Duration) (net.Conn, error)
+}
+
 // TransportBase is a remote store
 type TransportBase struct {
-	sock *mux.Layer
+	sock ListenerDialer
 
 	ilock   sync.RWMutex
 	inbound map[net.Conn]struct{}
@@ -37,7 +44,7 @@ type TransportBase struct {
 
 // InitTransportBase initializes the transport with an empty pool, starting the
 // listener and connection reaper
-func InitTransportBase(sock *mux.Layer, dialTimeout, maxIdle time.Duration) *TransportBase {
+func InitTransportBase(sock ListenerDialer, dialTimeout, maxIdle time.Duration) *TransportBase {
 	cst := &TransportBase{
 		sock:        sock,
 		outbound:    map[string][]*OutConn{},
@@ -45,6 +52,7 @@ func InitTransportBase(sock *mux.Layer, dialTimeout, maxIdle time.Duration) *Tra
 		dialTimeout: dialTimeout,
 		maxIdle:     maxIdle,
 	}
+
 	return cst
 }
 
@@ -73,6 +81,7 @@ func (st *TransportBase) handleConn(conn net.Conn) {
 	defer func() {
 		st.ilock.Lock()
 		delete(st.inbound, conn)
+		log.Println("deleted")
 		st.ilock.Unlock()
 		conn.Close()
 	}()
