@@ -81,7 +81,6 @@ func (st *TransportBase) handleConn(conn net.Conn) {
 	defer func() {
 		st.ilock.Lock()
 		delete(st.inbound, conn)
-		log.Println("deleted")
 		st.ilock.Unlock()
 		conn.Close()
 	}()
